@@ -8,8 +8,10 @@
 #$ = jQuery
 $ ->
 
-  Tictactoe = new Game
-
+ Tictactoe = new Game
+ FastClick.attach document.body
+ return
+ 
 class Const
     @NOUGHT = 1
     @CROSS = -1
@@ -164,6 +166,7 @@ class Game
         unless @status? then console.log("cancel"); return
         clickX = Math.floor((clientX - target[0].offsetLeft) / 200)
         clickY = Math.floor((clientY - target[0].offsetTop) / 200)
+        unless @board[clickX + clickY * 3] == null then console.log("not null"); return
         @board[clickX + clickY * 3] = @man_player.sengo
         judge = @board.wonorlost()
         console.log("judge=" + judge.toString()) if judge != null
@@ -194,7 +197,7 @@ class Game
         $('#btnStart').on 'click', (e) =>
             target = $(e.currentTarget)
             @btnstart(target)
-
+            
     gameover: (winorless) =>
         console.log("game.gameover")
         @status = null

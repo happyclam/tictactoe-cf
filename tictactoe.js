@@ -8,7 +8,8 @@
 
   $(function() {
     var Tictactoe;
-    return Tictactoe = new Game;
+    Tictactoe = new Game;
+    FastClick.attach(document.body);
   });
 
   Const = (function() {
