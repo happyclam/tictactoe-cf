@@ -268,6 +268,10 @@
       }
       clickX = Math.floor((clientX - target[0].offsetLeft) / 200);
       clickY = Math.floor((clientY - target[0].offsetTop) / 200);
+      if (this.board[clickX + clickY * 3] !== null) {
+        console.log("not null");
+        return;
+      }
       this.board[clickX + clickY * 3] = this.man_player.sengo;
       judge = this.board.wonorlost();
       if (judge !== null) {
@@ -365,5 +369,3 @@
   window.Game = window.Game || Game;
 
 }).call(this);
-
-//# sourceMappingURL=tictactoe.js.map
