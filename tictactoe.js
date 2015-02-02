@@ -27,6 +27,14 @@
 
     Const.LIMIT = 6;
 
+    Const.WIDTH = 300;
+
+    Const.HEIGHT = 300;
+
+    Const.RADIUS = 50;
+
+    Const.PART = 100;
+
     return Const;
 
   })();
@@ -44,8 +52,8 @@
         this.push(args[i]);
       }
       this.canvas = document.getElementById("canvasMain");
-      this.canvas.width = 600;
-      this.canvas.height = 600;
+      this.canvas.width = Const.WIDTH;
+      this.canvas.height = Const.HEIGHT;
       this.lines = [];
       this.lines.push([0, 1, 2]);
       this.lines.push([3, 4, 5]);
@@ -84,25 +92,25 @@
       this.context.fillStyle = "#ffffff";
       this.context.strokeStyle = "#000000";
       this.context.lineWidth = 3;
-      this.context.moveTo(200, 0);
-      this.context.lineTo(200, 600);
-      this.context.moveTo(400, 0);
-      this.context.lineTo(400, 600);
-      this.context.moveTo(0, 200);
-      this.context.lineTo(600, 200);
-      this.context.moveTo(0, 400);
-      this.context.lineTo(600, 400);
+      this.context.moveTo(Const.PART, 0);
+      this.context.lineTo(Const.PART, Const.HEIGHT);
+      this.context.moveTo(Const.PART * 2, 0);
+      this.context.lineTo(Const.PART * 2, Const.HEIGHT);
+      this.context.moveTo(0, Const.PART);
+      this.context.lineTo(Const.WIDTH, Const.PART);
+      this.context.moveTo(0, Const.PART * 2);
+      this.context.lineTo(Const.WIDTH, Const.PART * 2);
       for (i = _i = 0, _ref = this.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-        x = 200 * (i % 3);
-        y = 200 * Math.floor(i / 3);
+        x = Const.PART * (i % 3);
+        y = Const.PART * Math.floor(i / 3);
         if (this[i] === Const.NOUGHT) {
-          this.context.moveTo(x + 200, y + 100);
-          this.context.arc(x + 100, y + 100, 100, 0, Math.PI * 2, false);
+          this.context.moveTo(x + Const.PART, y + Const.RADIUS);
+          this.context.arc(x + Const.RADIUS, y + Const.RADIUS, Const.RADIUS, 0, Math.PI * 2, false);
         } else if (this[i] === Const.CROSS) {
           this.context.moveTo(x, y);
-          this.context.lineTo(x + 200, y + 200);
-          this.context.moveTo(x + 200, y);
-          this.context.lineTo(x, y + 200);
+          this.context.lineTo(x + Const.PART, y + Const.PART);
+          this.context.moveTo(x + Const.PART, y);
+          this.context.lineTo(x, y + Const.PART);
         }
       }
       return this.context.stroke();
@@ -266,8 +274,8 @@
         console.log("cancel");
         return;
       }
-      clickX = Math.floor((clientX - target[0].offsetLeft) / 200);
-      clickY = Math.floor((clientY - target[0].offsetTop) / 200);
+      clickX = Math.floor((clientX - target[0].offsetLeft) / Const.PART);
+      clickY = Math.floor((clientY - target[0].offsetTop) / Const.PART);
       if (this.board[clickX + clickY * 3] !== null) {
         console.log("not null");
         return;

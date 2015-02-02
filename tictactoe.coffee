@@ -8,10 +8,10 @@
 #$ = jQuery
 $ ->
 
- Tictactoe = new Game
- FastClick.attach document.body
- return
- 
+    Tictactoe = new Game
+    FastClick.attach document.body
+    return
+     
 class Const
     @NOUGHT = 1
     @CROSS = -1
@@ -19,6 +19,10 @@ class Const
     @MAX_VALUE = 9
     @MIN_VALUE = -9
     @LIMIT = 6
+    @WIDTH = 300
+    @HEIGHT = 300
+    @RADIUS = 50
+    @PART = 100
 
 class Board extends Array
 #    constructor: (args...) ->
@@ -26,8 +30,8 @@ class Board extends Array
 #        super(args...)
         @.push(args[i]) for i in [0...args.length]
         @canvas = document.getElementById("canvasMain")
-        @canvas.width = 600
-        @canvas.height = 600
+        @canvas.width = Const.WIDTH
+        @canvas.height = Const.HEIGHT
         @lines = []
         @lines.push([0, 1, 2])
         @lines.push([3, 4, 5])
@@ -54,19 +58,19 @@ class Board extends Array
         @context.fillStyle = "#ffffff"
         @context.strokeStyle = "#000000"
         @context.lineWidth = 3
-        @context.moveTo(200, 0); @context.lineTo(200, 600)
-        @context.moveTo(400, 0); @context.lineTo(400, 600)
-        @context.moveTo(0, 200); @context.lineTo(600, 200)
-        @context.moveTo(0, 400); @context.lineTo(600, 400)
+        @context.moveTo(Const.PART, 0); @context.lineTo(Const.PART, Const.HEIGHT)
+        @context.moveTo(Const.PART * 2, 0); @context.lineTo(Const.PART * 2, Const.HEIGHT)
+        @context.moveTo(0, Const.PART); @context.lineTo(Const.WIDTH, Const.PART)
+        @context.moveTo(0, Const.PART * 2); @context.lineTo(Const.WIDTH, Const.PART * 2)
         for i in [0...@.length]
-            x = (200 * (i % 3))
-            y = (200 * Math.floor(i / 3))
+            x = (Const.PART * (i % 3))
+            y = (Const.PART * Math.floor(i / 3))
             if @[i] == Const.NOUGHT
-                @context.moveTo(x + 200, y + 100)
-                @context.arc(x + 100, y + 100, 100, 0, Math.PI * 2, false)
+                @context.moveTo(x + Const.PART, y + Const.RADIUS)
+                @context.arc(x + Const.RADIUS, y + Const.RADIUS, Const.RADIUS, 0, Math.PI * 2, false)
             else if @[i] == Const.CROSS
-                @context.moveTo(x, y); @context.lineTo(x + 200, y + 200)
-                @context.moveTo(x + 200, y); @context.lineTo(x, y + 200)
+                @context.moveTo(x, y); @context.lineTo(x + Const.PART, y + Const.PART)
+                @context.moveTo(x + Const.PART, y); @context.lineTo(x, y + Const.PART)
         @context.stroke()
 
     wonorlost: =>
@@ -164,8 +168,8 @@ class Game
         console.log("game.touch")
         console.log(@status) 
         unless @status? then console.log("cancel"); return
-        clickX = Math.floor((clientX - target[0].offsetLeft) / 200)
-        clickY = Math.floor((clientY - target[0].offsetTop) / 200)
+        clickX = Math.floor((clientX - target[0].offsetLeft) / Const.PART)
+        clickY = Math.floor((clientY - target[0].offsetTop) / Const.PART)
         unless @board[clickX + clickY * 3] == null then console.log("not null"); return
         @board[clickX + clickY * 3] = @man_player.sengo
         judge = @board.wonorlost()
