@@ -1,25 +1,144 @@
-<!DOCTYPE html>
-<html lang="ja">
-  <meta charset="utf-8">
-  <title>三目並べ（TicTacToe）</title>
-  <script src="js/jquery-1.11.1.min.js"> </script>
-  <script src="tictactoe.js"> </script>
+<!DOCTYPE HTML>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
 <head>
+    <meta charset="utf-8">
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <script type="text/javascript" src="js/jquery-1.11.2.min.js"> </script>
+    <link rel="stylesheet" type="text/css" href="./css/jquery.mobile-1.4.5.min.css" />
+<!--    <link rel="stylesheet" type="text/css" href="css/index.css" />  -->
+    <script type="text/javascript" src="tictactoe.js"> </script>
+    <script type="text/javascript">
+        function onConfirm(idx) {
+            var level = null;
+            switch (idx){
+            case 1:
+                level = 0;
+                break;
+            case 2:
+                level = 3;
+                break;
+            case 3:
+                level = 6;
+                break;
+            default:
+                level = null;
+            }
+            if (level !== null) {
+                localStorage.setItem("level", level);
+            }
+        }
+        function showConfirm() {
+            var level = localStorage.getItem("level");
+            var msgstr = '';
+            switch (level){
+            case '6':
+                msgstr = '弱い,普通,*最強';
+                break;
+            case '3':
+                msgstr = '弱い,*普通,最強';
+                break;
+            case '0':
+                msgstr = '*弱い,普通,最強';
+                break;
+            default:
+                alert(level);
+                msgstr = '*弱い,普通,最強';
+            }
+            navigator.notification.confirm(
+                'コンピュータのレベル',
+                onConfirm,
+                'レベルの設定',
+                msgstr
+            );
+        }
+        function inputlevel(){
+            level = localStorage.getItem("level");
+            var radioList = document.getElementsByName("optLevel");
+            for(var i=0; i<radioList.length; i++){
+                if (radioList[i].name + level === radioList[i].id) {
+                    radioList[i].checked = true
+                    break;
+                }
+            }
+            <!-- location.href = "./settings.html"; -->
+            location.href = "#dlg_setlevel";
+        }
+        function outputlevel(){
+            var radioList = document.getElementsByName("optLevel");
+            var level = 0;
+            for(var i=0; i<radioList.length; i++){
+                if (radioList[i].checked) {
+                    level = radioList[i].value;
+                    break;
+                }
+            }
+            localStorage.setItem("level", level);
+            location.href = "./index.html";
+        };
+    </script>
+    <!-- <script src="http://h55n:8080/target/target-script-min.js#happyclam"></script>  -->
+    <script type="text/javascript" src="js/jquery.mobile-1.4.5.min.js"> </script>
+    <title>三目並べ（TicTacToe）</title>
 </head>
 <body>
-<p id="title">三目並べ（TicTacToe）</p>
-<p>
-<canvas id="canvasMain"></canvas>
-</p>
-<p>
-<div id="orders">
-<input type="radio" name="optOrders" id="optOrder1" value="-1" checked="checked">First
-<input type="radio" name="optOrders" id="optOrder2" value="1">Second
+<div data-role="page" data-fullscreen="true">
+  <div data-role="header" data-position="fixed">
+    <h1 id="title">三目並べ</h1>
+    <a href="javascript:inputlevel()" data-rel="dialog" data-transition="pop" class="ui-btn-right" data-role="button" data-icon="gear">設定</a>
+  </div>
+  <div data-role="content">
+    <canvas id="canvasMain"></canvas>
+    <div data-type="horizontal">
+      <input type="radio" name="optOrders" id="optOrder1" value="-1" checked="checked">先手
+      <input type="radio" name="optOrders" id="optOrder2" value="1">後手
+    </div>
+    <p>
+      <span id="spanStatus"></span>
+      <input id="btnStart" type="button" value="Start!">
+    </p>
+  </div>
+  <div data-role="footer">
+    <h4>&copy;2015 happyclam.github.io</h4>
+  </div>
 </div>
-</p>
-<p>
-<input id="btnStart" type="button" value="Start!">
-<span id="spanStatus"></span>
-</p>
+<div data-role="page" id="dlg_setlevel">
+  <div data-role="header" data-position="fixed">
+    <h1 id="title">コンピュータのレベル</h1>
+  </div>
+  <div data-role="content">
+    <div data-type="horizontal">
+      <input type="radio" name="optLevel" id="optLevel0" value="0">弱い
+      <input type="radio" name="optLevel" id="optLevel3" value="3">普通
+      <input type="radio" name="optLevel" id="optLevel6" value="6">最強
+    </div>
+    <a href="javascript:outputlevel()" data-role="button">O.K.</a>
+    <a href="index.html" data-role="button">キャンセル</a>
+  </div>
+  <div data-role="footer">
+    <h4>&copy;2015 happyclam.github.io</h4>
+  </div>
+</div>
+
 </body>
 </html>

@@ -8,8 +8,7 @@
 
   $(function() {
     var Tictactoe;
-    Tictactoe = new Game;
-    FastClick.attach(document.body);
+    return Tictactoe = new Game(localStorage.getItem("level"));
   });
 
   Const = (function() {
@@ -24,8 +23,6 @@
     Const.MAX_VALUE = 9;
 
     Const.MIN_VALUE = -9;
-
-    Const.LIMIT = 6;
 
     Const.WIDTH = 300;
 
@@ -44,7 +41,10 @@
 
     function Board(args) {
       this.wonorlost = __bind(this.wonorlost, this);
+      this.drawline = __bind(this.drawline, this);
       this.display = __bind(this.display, this);
+      this.drawanimation = __bind(this.drawanimation, this);
+      this.animate = __bind(this.animate, this);
       this.init = __bind(this.init, this);
       this.clone = __bind(this.clone, this);
       var i, _i, _ref;
@@ -54,6 +54,7 @@
       this.canvas = document.getElementById("canvasMain");
       this.canvas.width = Const.WIDTH;
       this.canvas.height = Const.HEIGHT;
+      this.lineno = null;
       this.lines = [];
       this.lines.push([0, 1, 2]);
       this.lines.push([3, 4, 5]);
@@ -64,6 +65,16 @@
       this.lines.push([0, 4, 8]);
       this.lines.push([2, 4, 6]);
       this.weight = [1, 0, 1, 0, 2, 0, 1, 0, 1];
+      this.start = {
+        y: 0,
+        x: 0
+      };
+      this.end = {
+        y: 220,
+        x: 100
+      };
+      this.request = null;
+      this.amount = 0;
     }
 
     Board.prototype.clone = function() {
@@ -79,19 +90,97 @@
 
     Board.prototype.init = function() {
       var i, _i, _ref;
+      this.lineno = null;
       for (i = _i = 0, _ref = this.length; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
         this[i] = null;
       }
       return this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     };
 
+    Board.prototype.animate = function() {
+      this.request = requestAnimFrame(this.animate, this.canvas);
+      return this.drawanimation();
+    };
+
+    Board.prototype.drawanimation = function() {
+      var newX, newY;
+      this.context = this.canvas.getContext('2d');
+      this.amount += 0.02;
+      if (this.amount > 1) {
+        this.amount = 1;
+      }
+      switch (this.lineno) {
+        case 0:
+          this.start.x = 25;
+          this.start.y = Const.PART - 50;
+          this.end.x = Const.WIDTH - 25;
+          this.end.y = Const.PART - 50;
+          break;
+        case 1:
+          this.start.x = 25;
+          this.start.y = Const.PART * 2 - 50;
+          this.end.x = Const.WIDTH - 25;
+          this.end.y = Const.PART * 2 - 50;
+          break;
+        case 2:
+          this.start.x = 25;
+          this.start.y = Const.PART * 3 - 50;
+          this.end.x = Const.WIDTH - 25;
+          this.end.y = Const.PART * 3 - 50;
+          break;
+        case 3:
+          this.start.x = Const.PART - 50;
+          this.start.y = 25;
+          this.end.x = Const.PART - 50;
+          this.end.y = Const.HEIGHT - 25;
+          break;
+        case 4:
+          this.start.x = Const.PART * 2 - 50;
+          this.start.y = 25;
+          this.end.x = Const.PART * 2 - 50;
+          this.end.y = Const.HEIGHT - 25;
+          break;
+        case 5:
+          this.start.x = Const.PART * 3 - 50;
+          this.start.y = 25;
+          this.end.x = Const.PART * 3 - 50;
+          this.end.y = Const.HEIGHT - 25;
+          break;
+        case 6:
+          this.start.x = 25;
+          this.start.y = 25;
+          this.end.x = Const.WIDTH - 25;
+          this.end.y = Const.HEIGHT - 25;
+          break;
+        case 7:
+          this.start.x = 25;
+          this.start.y = Const.HEIGHT - 25;
+          this.end.x = Const.WIDTH - 25;
+          this.end.y = 25;
+      }
+      this.context.beginPath();
+      this.context.moveTo(this.start.x, this.start.y);
+      this.context.strokeStyle = 'rgba(199, 21, 133, 0.2)';
+      this.context.lineWidth = 12;
+      newX = this.start.x + (this.end.x - this.start.x) * this.amount;
+      newY = this.start.y + (this.end.y - this.start.y) * this.amount;
+      this.context.lineTo(newX, newY);
+      this.context.stroke();
+      if (newX === this.end.x && newY === this.end.y) {
+        cancelRequestAnimFrame(this.request);
+        this.request = null;
+        return this.amount = 0;
+      }
+    };
+
     Board.prototype.display = function() {
       var i, x, y, _i, _ref;
       this.context = this.canvas.getContext('2d');
       this.context.beginPath();
-      this.context.fillStyle = "#ffffff";
-      this.context.strokeStyle = "#000000";
-      this.context.lineWidth = 3;
+      this.context.fillStyle = "#2f4f4f";
+      this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      this.context.strokeStyle = "rgb(255, 255, 255)";
+      this.context.lineWidth = 5;
       this.context.moveTo(Const.PART, 0);
       this.context.lineTo(Const.PART, Const.HEIGHT);
       this.context.moveTo(Const.PART * 2, 0);
@@ -105,24 +194,67 @@
         y = Const.PART * Math.floor(i / 3);
         if (this[i] === Const.NOUGHT) {
           this.context.moveTo(x + Const.PART, y + Const.RADIUS);
-          this.context.arc(x + Const.RADIUS, y + Const.RADIUS, Const.RADIUS, 0, Math.PI * 2, false);
+          this.context.arc(x + Const.RADIUS, y + Const.RADIUS, Const.RADIUS - 4, 0, Math.PI * 2, false);
         } else if (this[i] === Const.CROSS) {
-          this.context.moveTo(x, y);
-          this.context.lineTo(x + Const.PART, y + Const.PART);
-          this.context.moveTo(x + Const.PART, y);
-          this.context.lineTo(x, y + Const.PART);
+          this.context.moveTo(x + 10, y + 10);
+          this.context.lineTo(x + Const.PART - 10, y + Const.PART - 10);
+          this.context.moveTo(x + Const.PART - 10, y + 10);
+          this.context.lineTo(x + 10, y + Const.PART - 10);
         }
       }
       return this.context.stroke();
     };
 
+    Board.prototype.drawline = function() {
+      console.log(this.lineno);
+      this.context = this.canvas.getContext('2d');
+      this.context.beginPath();
+      this.context.strokeStyle = "red";
+      this.context.lineWidth = 12;
+      switch (this.lineno) {
+        case 0:
+          this.context.moveTo(0 + 25, Const.PART - 50);
+          this.context.lineTo(Const.WIDTH - 25, Const.PART - 50);
+          break;
+        case 1:
+          this.context.moveTo(0 + 25, Const.PART * 2 - 50);
+          this.context.lineTo(Const.WIDTH - 25, Const.PART * 2 - 50);
+          break;
+        case 2:
+          this.context.moveTo(0 + 25, Const.PART * 3 - 50);
+          this.context.lineTo(Const.WIDTH - 25, Const.PART * 3 - 50);
+          break;
+        case 3:
+          this.context.moveTo(Const.PART - 50, 0 + 25);
+          this.context.lineTo(Const.PART - 50, Const.HEIGHT - 25);
+          break;
+        case 4:
+          this.context.moveTo(Const.PART * 2 - 50, 0 + 25);
+          this.context.lineTo(Const.PART * 2 - 50, Const.HEIGHT - 25);
+          break;
+        case 5:
+          this.context.moveTo(Const.PART * 3 - 50, 0 + 25);
+          this.context.lineTo(Const.PART * 3 - 50, Const.HEIGHT - 25);
+          break;
+        case 6:
+          this.context.moveTo(25, 25);
+          this.context.lineTo(Const.WIDTH - 25, Const.HEIGHT - 25);
+          break;
+        case 7:
+          this.context.moveTo(25, Const.HEIGHT - 25);
+          this.context.lineTo(Const.WIDTH - 25, 25);
+      }
+      return this.context.stroke();
+    };
+
     Board.prototype.wonorlost = function() {
-      var line, piece, _i, _len, _ref;
+      var i, line, piece, _i, _len, _ref;
       _ref = this.lines;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        line = _ref[_i];
+      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+        line = _ref[i];
         piece = this[line[0]];
         if (piece && piece === this[line[1]] && piece === this[line[2]]) {
+          this.lineno = i;
           return piece;
         }
       }
@@ -137,12 +269,12 @@
   })(Array);
 
   Player = (function() {
-    function Player(sengo) {
+    function Player(sengo, level) {
       this.sengo = sengo != null ? sengo : Const.CROSS;
+      this.level = level != null ? level : 2;
       this.lookahead = __bind(this.lookahead, this);
       this.evaluation = __bind(this.evaluation, this);
       this.check = __bind(this.check, this);
-      console.log(this.sengo);
     }
 
     Player.prototype.check = function(board) {
@@ -174,7 +306,7 @@
       })();
     };
 
-    Player.prototype.lookahead = function(board, turn, cnt, threshold) {
+    Player.prototype.lookahead = function(board, level, turn, cnt, threshold) {
       var b, i, locate, ret, teban, temp_v, value, _i, _len;
       if (turn === Const.CROSS) {
         value = Const.MIN_VALUE;
@@ -186,9 +318,9 @@
         b = board[i];
         if (b === null) {
           board[i] = turn;
-          if (cnt < Const.LIMIT && board.wonorlost() === null) {
+          if (cnt < level && board.wonorlost() === null) {
             teban = (turn === Const.NOUGHT ? Const.CROSS : Const.NOUGHT);
-            ret = this.lookahead(board, teban, cnt + 1, value);
+            ret = this.lookahead(board, level, teban, cnt + 1, value);
             temp_v = ret.value;
           } else {
             temp_v = this.evaluation(board);
@@ -220,7 +352,8 @@
   })();
 
   Game = (function() {
-    function Game() {
+    function Game(cpulevel) {
+      this.cpulevel = cpulevel != null ? cpulevel : 2;
       this.prepared = __bind(this.prepared, this);
       this.gameover = __bind(this.gameover, this);
       this.setEventListener = __bind(this.setEventListener, this);
@@ -230,7 +363,7 @@
       this.board = new Board([null, null, null, null, null, null, null, null, null]);
       this.playing = false;
       this.man_player = new Player(Const.CROSS);
-      this.cpu_player = new Player(Const.NOUGHT);
+      this.cpu_player = new Player(Const.NOUGHT, this.cpulevel);
       this.orders = document.getElementsByName("optOrders");
       this.startbtn = document.getElementById("btnStart");
       this.statusarea = document.getElementById("spanStatus");
@@ -240,36 +373,30 @@
     }
 
     Game.prototype.btnstart = function(target) {
-      var ret, threshold;
-      console.log("game.btnstart");
+      var idx, threshold;
       this.board.init();
+      this.cpu_player.level = localStorage.getItem("level");
       if (this.cpu_player.sengo === Const.CROSS) {
         threshold = Const.MAX_VALUE;
-        ret = this.cpu_player.lookahead(this.board, this.cpu_player.sengo, 1, threshold);
-        console.log(ret);
-        this.board[ret.locate] = Const.CROSS;
+        idx = Math.floor(Math.random() * 9);
+        this.board[idx] = Const.CROSS;
       }
       this.board.display();
       return this.prepared();
     };
 
     Game.prototype.optchange = function(target) {
-      console.log("game.optchange");
       if (target.context.value === "1") {
         this.man_player.sengo = Const.NOUGHT;
-        this.cpu_player.sengo = Const.CROSS;
+        return this.cpu_player.sengo = Const.CROSS;
       } else {
         this.man_player.sengo = Const.CROSS;
-        this.cpu_player.sengo = Const.NOUGHT;
+        return this.cpu_player.sengo = Const.NOUGHT;
       }
-      console.log(this.man_player.sengo);
-      return console.log(this.cpu_player.sengo);
     };
 
     Game.prototype.touch = function(target, clientX, clientY) {
-      var clickX, clickY, judge, ret, threshold;
-      console.log("game.touch");
-      console.log(this.status);
+      var clickX, clickY, idx, judge, ret, threshold, _ref;
       if (this.status == null) {
         console.log("cancel");
         return;
@@ -282,19 +409,30 @@
       }
       this.board[clickX + clickY * 3] = this.man_player.sengo;
       judge = this.board.wonorlost();
-      if (judge !== null) {
-        console.log("judge=" + judge.toString());
-      }
-      if (judge !== null) {
-        this.gameover(judge);
+      if (judge != null) {
+        this.gameover(judge, this.man_player.sengo);
       } else {
-        threshold = this.cpu_player.sengo === Const.CROSS ? Const.MAX_VALUE : Const.MIN_VALUE;
-        ret = this.cpu_player.lookahead(this.board, this.cpu_player.sengo, 1, threshold);
-        console.log(ret);
-        this.board[ret.locate] = this.cpu_player.sengo;
+        if ((this.cpu_player.sengo === Const.NOUGHT) && !(_ref = Const.NOUGHT, __indexOf.call(this.board, _ref) >= 0)) {
+          while (true) {
+            idx = [0, 2, 4, 6, 8][Math.floor(Math.random() * 5)];
+            console.log(idx);
+            if (!this.board[idx]) {
+              break;
+            }
+          }
+          if ((this.board[4] === null) && (this.cpu_player.level === "6")) {
+            this.board[4] = this.cpu_player.sengo;
+          } else {
+            this.board[idx] = this.cpu_player.sengo;
+          }
+        } else {
+          threshold = this.cpu_player.sengo === Const.CROSS ? Const.MAX_VALUE : Const.MIN_VALUE;
+          ret = this.cpu_player.lookahead(this.board, this.cpu_player.level, this.cpu_player.sengo, 1, threshold);
+          this.board[ret.locate] = this.cpu_player.sengo;
+        }
         judge = this.board.wonorlost();
-        if (judge !== null) {
-          this.gameover(judge);
+        if (judge != null) {
+          this.gameover(judge, this.man_player.sengo);
         }
       }
       return this.board.display();
@@ -331,9 +469,8 @@
       })(this));
     };
 
-    Game.prototype.gameover = function(winorless) {
+    Game.prototype.gameover = function(winner, man) {
       var msg, opt, _i, _len, _ref;
-      console.log("game.gameover");
       this.status = null;
       _ref = this.orders;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -341,9 +478,8 @@
         opt.disabled = false;
       }
       this.startbtn.disabled = false;
-      console.log(this.statusarea);
       msg = (function() {
-        switch (winorless) {
+        switch (winner) {
           case Const.CROSS:
             return "×の勝ち";
           case Const.NOUGHT:
@@ -354,12 +490,16 @@
             return "";
         }
       })();
-      return this.statusarea.innerHTML = msg;
+      this.statusarea.innerHTML = msg;
+      console.log("winner=" + winner.toString());
+      console.log("lineno=" + this.board.lineno.toString());
+      if (winner !== 0) {
+        return this.board.animate();
+      }
     };
 
     Game.prototype.prepared = function() {
       var opt, _i, _len, _ref;
-      console.log("game.prepared");
       this.status = true;
       _ref = this.orders;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -376,4 +516,16 @@
 
   window.Game = window.Game || Game;
 
+  window.requestAnimFrame = (function() {
+    return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback, element) {
+      return window.setTimeout(callback, 1000 / 60);
+    };
+  })();
+
+  window.cancelRequestAnimFrame = (function() {
+    return window.cancelAnimationFrame || window.webkitCancelRequestAnimationFrame || window.mozCancelRequestAnimationFrame || window.oCancelRequestAnimationFrame || window.msCancelRequestAnimationFrame || clearTimeout;
+  })();
+
 }).call(this);
+
+//# sourceMappingURL=tictactoe.js.map

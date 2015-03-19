@@ -1,37 +1,26 @@
 #-*- coding: utf-8 -*-
-#NOUGHT = -1
-#CROSS = 1
-#DRAW = 0
-#MAX_VALUE = 9
-#MIN_VALUE = -9
-#LIMIT = 9
-#$ = jQuery
 $ ->
-
-    Tictactoe = new Game
-    FastClick.attach document.body
-    return
-     
+    
+    Tictactoe = new Game(localStorage.getItem("level"))
+      
 class Const
     @NOUGHT = 1
     @CROSS = -1
     @DRAW = 0
     @MAX_VALUE = 9
     @MIN_VALUE = -9
-    @LIMIT = 6
     @WIDTH = 300
     @HEIGHT = 300
     @RADIUS = 50
     @PART = 100
 
 class Board extends Array
-#    constructor: (args...) ->
     constructor: (args) ->
-#        super(args...)
         @.push(args[i]) for i in [0...args.length]
         @canvas = document.getElementById("canvasMain")
         @canvas.width = Const.WIDTH
         @canvas.height = Const.HEIGHT
+        @lineno = null
         @lines = []
         @lines.push([0, 1, 2])
         @lines.push([3, 4, 5])
@@ -42,6 +31,10 @@ class Board extends Array
         @lines.push([0, 4, 8])
         @lines.push([2, 4, 6])
         @weight = [1, 0, 1, 0, 2, 0, 1, 0, 1]
+        @start = {y:0, x:0}
+        @end = {y:220, x:100}         
+        @request = null
+        @amount = 0
         
     clone: =>
         buf = new Array(@.length)
@@ -49,15 +42,64 @@ class Board extends Array
             buf[i] = temp
 
     init: =>
+        @lineno = null
         @[i] = null for i in [0...@.length]
         @context.clearRect(0, 0, @canvas.width, @canvas.height)
 
+    animate: =>
+        @request = requestAnimFrame(@animate, @canvas)
+        @drawanimation()
+
+    drawanimation: =>
+        @context = @canvas.getContext('2d')
+        @amount += 0.02
+        @amount = 1  if @amount > 1
+        switch @lineno
+            when 0
+                @start.x = 25; @start.y = Const.PART - 50
+                @end.x = Const.WIDTH - 25; @end.y = Const.PART - 50
+            when 1
+                @start.x = 25; @start.y = Const.PART * 2 - 50            
+                @end.x = Const.WIDTH - 25; @end.y = Const.PART * 2 - 50
+            when 2
+                @start.x = 25; @start.y = Const.PART * 3 - 50
+                @end.x = Const.WIDTH - 25; @end.y = Const.PART * 3 - 50
+            when 3
+                @start.x = Const.PART - 50; @start.y = 25
+                @end.x = Const.PART - 50; @end.y = Const.HEIGHT - 25
+            when 4
+                @start.x = Const.PART * 2 - 50; @start.y = 25            
+                @end.x = Const.PART * 2 - 50; @end.y = Const.HEIGHT - 25
+            when 5
+                @start.x = Const.PART * 3 - 50; @start.y = 25            
+                @end.x = Const.PART * 3 - 50; @end.y = Const.HEIGHT - 25
+            when 6
+                @start.x = 25; @start.y = 25            
+                @end.x = Const.WIDTH - 25; @end.y = Const.HEIGHT - 25
+            when 7
+                @start.x = 25; @start.y = Const.HEIGHT - 25            
+                @end.x = Const.WIDTH - 25; @end.y = 25
+                        
+        @context.beginPath()
+        @context.moveTo @start.x, @start.y
+        @context.strokeStyle = 'rgba(199, 21, 133, 0.2)'
+        @context.lineWidth = 12
+        newX = @start.x + (@end.x - @start.x) * @amount
+        newY = @start.y + (@end.y - @start.y) * @amount
+        @context.lineTo newX, newY
+        @context.stroke()
+        if newX is @end.x and newY is @end.y
+            cancelRequestAnimFrame @request
+            @request = null
+            @amount = 0
+        
     display: =>
         @context = @canvas.getContext('2d')
         @context.beginPath()
-        @context.fillStyle = "#ffffff"
-        @context.strokeStyle = "#000000"
-        @context.lineWidth = 3
+        @context.fillStyle = "#2f4f4f"
+        @context.fillRect(0, 0, @canvas.width, @canvas.height)
+        @context.strokeStyle = "rgb(255, 255, 255)"
+        @context.lineWidth = 5
         @context.moveTo(Const.PART, 0); @context.lineTo(Const.PART, Const.HEIGHT)
         @context.moveTo(Const.PART * 2, 0); @context.lineTo(Const.PART * 2, Const.HEIGHT)
         @context.moveTo(0, Const.PART); @context.lineTo(Const.WIDTH, Const.PART)
@@ -67,24 +109,52 @@ class Board extends Array
             y = (Const.PART * Math.floor(i / 3))
             if @[i] == Const.NOUGHT
                 @context.moveTo(x + Const.PART, y + Const.RADIUS)
-                @context.arc(x + Const.RADIUS, y + Const.RADIUS, Const.RADIUS, 0, Math.PI * 2, false)
+                @context.arc(x + Const.RADIUS, y + Const.RADIUS, Const.RADIUS - 4, 0, Math.PI * 2, false)
             else if @[i] == Const.CROSS
-                @context.moveTo(x, y); @context.lineTo(x + Const.PART, y + Const.PART)
-                @context.moveTo(x + Const.PART, y); @context.lineTo(x, y + Const.PART)
+                @context.moveTo(x + 10, y + 10); @context.lineTo(x + Const.PART - 10, y + Const.PART - 10)
+                @context.moveTo(x + Const.PART - 10, y + 10); @context.lineTo(x + 10, y + Const.PART - 10)
+        @context.stroke()
+
+    drawline: =>
+        console.log(@lineno)
+        @context = @canvas.getContext('2d')
+        @context.beginPath()
+        @context.strokeStyle = "red"
+        @context.lineWidth = 12
+        switch @lineno
+            when 0
+                @context.moveTo(0 + 25, Const.PART - 50); @context.lineTo(Const.WIDTH - 25, Const.PART - 50)
+            when 1
+                @context.moveTo(0 + 25, Const.PART * 2 - 50); @context.lineTo(Const.WIDTH - 25, Const.PART * 2 - 50)
+            when 2
+                @context.moveTo(0 + 25, Const.PART * 3 - 50); @context.lineTo(Const.WIDTH - 25, Const.PART * 3 - 50)
+            when 3
+                @context.moveTo(Const.PART - 50, 0 + 25); @context.lineTo(Const.PART - 50, Const.HEIGHT - 25)
+            when 4
+                @context.moveTo(Const.PART * 2 - 50, 0 + 25); @context.lineTo(Const.PART * 2 - 50, Const.HEIGHT - 25)
+            when 5
+                @context.moveTo(Const.PART * 3 - 50, 0 + 25); @context.lineTo(Const.PART * 3 - 50, Const.HEIGHT - 25)
+            when 6
+                @context.moveTo(25, 25); @context.lineTo(Const.WIDTH - 25, Const.HEIGHT - 25)
+            when 7
+                @context.moveTo(25, Const.HEIGHT - 25); @context.lineTo(Const.WIDTH - 25, 25)
         @context.stroke()
 
     wonorlost: =>
-        for line in @.lines
+        for line,i in @.lines
             piece = @[line[0]]
             if (piece && piece == @[line[1]] && piece == @[line[2]])
+                @lineno = i
                 return piece
         return null if null in @
         0
 
 class Player
-    constructor: (@sengo = Const.CROSS) ->
-        console.log(@sengo)
-
+    constructor: (@sengo = Const.CROSS, @level = 2) ->
+        # console.log("Player.Constructor")
+        # console.log(@sengo)
+        # console.log(@level)
+        
     check: (board) =>
         for line in board.lines
             piece = board[line[0]]
@@ -99,7 +169,7 @@ class Player
             when Const.DRAW then 0
             else 0
                     
-    lookahead: (board, turn, cnt, threshold) =>
+    lookahead: (board, level, turn, cnt, threshold) =>
 #        if cnt >= Const.LIMIT
 #            return locate: null, value: @evaluation(board)
         if turn == Const.CROSS
@@ -111,9 +181,9 @@ class Player
         for b,i in board
             if b == null
                 board[i] = turn
-                if cnt < Const.LIMIT && board.wonorlost() == null
+                if cnt < level && board.wonorlost() == null
                     teban = (if turn == Const.NOUGHT then Const.CROSS else Const.NOUGHT)
-                    ret = @lookahead(board, teban, cnt + 1, value)
+                    ret = @lookahead(board, level, teban, cnt + 1, value)
                     temp_v = ret.value
                 else
                     temp_v = @evaluation(board)
@@ -130,11 +200,11 @@ class Player
         return locate: locate, value: value
         
 class Game
-    constructor: ->
+    constructor: (@cpulevel = 2)->
         @board = new Board([null, null, null, null, null, null, null, null, null])
         @playing = false
         @man_player = new Player(Const.CROSS)
-        @cpu_player = new Player(Const.NOUGHT)
+        @cpu_player = new Player(Const.NOUGHT, @cpulevel)
         @orders = document.getElementsByName("optOrders")
         @startbtn = document.getElementById("btnStart")
         @statusarea = document.getElementById("spanStatus")        
@@ -143,46 +213,58 @@ class Game
         @status = null
                     
     btnstart: (target) =>
-        console.log("game.btnstart")
         @board.init()
+        @cpu_player.level = localStorage.getItem("level")
         if @cpu_player.sengo == Const.CROSS
             threshold = Const.MAX_VALUE
-            ret = @cpu_player.lookahead(@board, @cpu_player.sengo, 1, threshold)            
-            console.log(ret)
-            @board[ret.locate] = Const.CROSS
+#            ret = @cpu_player.lookahead(@board, @cpu_player.level, @cpu_player.sengo, 1, threshold) 
+#            @board[ret.locate] = Const.CROSS
+#            @board[4] = Const.CROSS
+            idx = Math.floor(Math.random() * 9)
+            @board[idx] = Const.CROSS
         @board.display()        
         @prepared()
 
     optchange: (target) =>
-        console.log("game.optchange")
         if target.context.value == "1"
             @man_player.sengo = Const.NOUGHT
             @cpu_player.sengo = Const.CROSS
         else
             @man_player.sengo = Const.CROSS
             @cpu_player.sengo = Const.NOUGHT
-        console.log(@man_player.sengo)
-        console.log(@cpu_player.sengo)
+        # console.log(@man_player.sengo)
+        # console.log(@cpu_player.sengo)
         
     touch: (target, clientX, clientY) =>
-        console.log("game.touch")
-        console.log(@status) 
         unless @status? then console.log("cancel"); return
         clickX = Math.floor((clientX - target[0].offsetLeft) / Const.PART)
         clickY = Math.floor((clientY - target[0].offsetTop) / Const.PART)
         unless @board[clickX + clickY * 3] == null then console.log("not null"); return
         @board[clickX + clickY * 3] = @man_player.sengo
         judge = @board.wonorlost()
-        console.log("judge=" + judge.toString()) if judge != null
-        if judge != null
-            @gameover(judge)
+        # console.log("judge=" + judge.toString()) if judge != null
+        if judge?
+            @gameover(judge, @man_player.sengo)
         else
-            threshold = if @cpu_player.sengo == Const.CROSS then Const.MAX_VALUE else Const.MIN_VALUE
-            ret = @cpu_player.lookahead(@board, @cpu_player.sengo, 1, threshold)               
-            console.log(ret)
-            @board[ret.locate] = @cpu_player.sengo
+            #CPUが後手でCPUにとっての初手の場合、乱数で指させる
+            if (@cpu_player.sengo == Const.NOUGHT) && !(Const.NOUGHT in @board)
+                loop
+                    idx = [0, 2, 4, 6, 8][Math.floor(Math.random() * 5)]
+                    console.log(idx)
+                    break unless @board[idx]
+                #２手目は真ん中が空いていれば取らないとWリーチ掛けられて必敗
+                #最強の時以外は乱数のまま
+                if (@board[4] == null) && (@cpu_player.level == "6")
+                    @board[4] = @cpu_player.sengo
+                else
+                    @board[idx] = @cpu_player.sengo                
+            else
+                threshold = if @cpu_player.sengo == Const.CROSS then Const.MAX_VALUE else Const.MIN_VALUE
+                ret = @cpu_player.lookahead(@board, @cpu_player.level, @cpu_player.sengo, 1, threshold)  
+                @board[ret.locate] = @cpu_player.sengo
+            
             judge = @board.wonorlost()
-            @gameover(judge) if judge != null
+            @gameover(judge, @man_player.sengo) if judge?
         @board.display()
             
     setEventListener: =>
@@ -202,22 +284,23 @@ class Game
             target = $(e.currentTarget)
             @btnstart(target)
             
-    gameover: (winorless) =>
-        console.log("game.gameover")
+    gameover: (winner, man) =>
         @status = null
         for opt in @orders
             opt.disabled = false
         @startbtn.disabled = false
-        console.log(@statusarea)
-        msg = switch winorless
+        msg = switch winner
             when Const.CROSS then "×の勝ち"
             when Const.NOUGHT then "◯の勝ち"
             when Const.DRAW then "引き分け"
             else ""
         @statusarea.innerHTML = msg
+        console.log("winner="+winner.toString())
+        console.log("lineno="+@board.lineno.toString())
+#        @board.drawline() if winner != 0
+        @board.animate() if winner != 0
                 
     prepared: =>
-        console.log("game.prepared")
         @status = true
         for opt in @orders
             opt.disabled = true
@@ -226,3 +309,10 @@ class Game
 
 window.Game = window.Game || Game
     
+window.requestAnimFrame = (->
+  window.requestAnimationFrame or window.webkitRequestAnimationFrame or window.mozRequestAnimationFrame or window.oRequestAnimationFrame or window.msRequestAnimationFrame or (callback, element) ->
+    window.setTimeout callback, 1000 / 60
+)()
+window.cancelRequestAnimFrame = (->
+  window.cancelAnimationFrame or window.webkitCancelRequestAnimationFrame or window.mozCancelRequestAnimationFrame or window.oCancelRequestAnimationFrame or window.msCancelRequestAnimationFrame or clearTimeout
+)()
