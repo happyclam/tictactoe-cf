@@ -82,7 +82,7 @@ class Board extends Array
                         
         @context.beginPath()
         @context.moveTo @start.x, @start.y
-        @context.strokeStyle = 'rgba(199, 21, 133, 0.2)'
+        @context.strokeStyle = 'rgba(255, 105, 180, 0.2)'
         @context.lineWidth = 12
         newX = @start.x + (@end.x - @start.x) * @amount
         newY = @start.y + (@end.y - @start.y) * @amount
@@ -150,7 +150,7 @@ class Board extends Array
         0
 
 class Player
-    constructor: (@sengo = Const.CROSS, @level = 2) ->
+    constructor: (@sengo = Const.CROSS, @level = "2") ->
         # console.log("Player.Constructor")
         # console.log(@sengo)
         # console.log(@level)
@@ -200,7 +200,7 @@ class Player
         return locate: locate, value: value
         
 class Game
-    constructor: (@cpulevel = 2)->
+    constructor: (@cpulevel = "2")->
         @board = new Board([null, null, null, null, null, null, null, null, null])
         @playing = false
         @man_player = new Player(Const.CROSS)
@@ -244,7 +244,7 @@ class Game
         judge = @board.wonorlost()
         # console.log("judge=" + judge.toString()) if judge != null
         if judge?
-            @gameover(judge, @man_player.sengo)
+            @gameover(judge)
         else
             #CPUが後手でCPUにとっての初手の場合、乱数で指させる
             if (@cpu_player.sengo == Const.NOUGHT) && !(Const.NOUGHT in @board)
@@ -264,7 +264,7 @@ class Game
                 @board[ret.locate] = @cpu_player.sengo
             
             judge = @board.wonorlost()
-            @gameover(judge, @man_player.sengo) if judge?
+            @gameover(judge) if judge?
         @board.display()
             
     setEventListener: =>
@@ -284,7 +284,7 @@ class Game
             target = $(e.currentTarget)
             @btnstart(target)
             
-    gameover: (winner, man) =>
+    gameover: (winner) =>
         @status = null
         for opt in @orders
             opt.disabled = false
@@ -296,7 +296,7 @@ class Game
             else ""
         @statusarea.innerHTML = msg
         console.log("winner="+winner.toString())
-        console.log("lineno="+@board.lineno.toString())
+        console.log("lineno="+@board.lineno.toString()) if @board.lineno?
 #        @board.drawline() if winner != 0
         @board.animate() if winner != 0
                 

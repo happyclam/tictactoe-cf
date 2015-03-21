@@ -160,7 +160,7 @@
       }
       this.context.beginPath();
       this.context.moveTo(this.start.x, this.start.y);
-      this.context.strokeStyle = 'rgba(199, 21, 133, 0.2)';
+      this.context.strokeStyle = 'rgba(255, 105, 180, 0.2)';
       this.context.lineWidth = 12;
       newX = this.start.x + (this.end.x - this.start.x) * this.amount;
       newY = this.start.y + (this.end.y - this.start.y) * this.amount;
@@ -271,7 +271,7 @@
   Player = (function() {
     function Player(sengo, level) {
       this.sengo = sengo != null ? sengo : Const.CROSS;
-      this.level = level != null ? level : 2;
+      this.level = level != null ? level : "2";
       this.lookahead = __bind(this.lookahead, this);
       this.evaluation = __bind(this.evaluation, this);
       this.check = __bind(this.check, this);
@@ -353,7 +353,7 @@
 
   Game = (function() {
     function Game(cpulevel) {
-      this.cpulevel = cpulevel != null ? cpulevel : 2;
+      this.cpulevel = cpulevel != null ? cpulevel : "2";
       this.prepared = __bind(this.prepared, this);
       this.gameover = __bind(this.gameover, this);
       this.setEventListener = __bind(this.setEventListener, this);
@@ -410,7 +410,7 @@
       this.board[clickX + clickY * 3] = this.man_player.sengo;
       judge = this.board.wonorlost();
       if (judge != null) {
-        this.gameover(judge, this.man_player.sengo);
+        this.gameover(judge);
       } else {
         if ((this.cpu_player.sengo === Const.NOUGHT) && !(_ref = Const.NOUGHT, __indexOf.call(this.board, _ref) >= 0)) {
           while (true) {
@@ -432,7 +432,7 @@
         }
         judge = this.board.wonorlost();
         if (judge != null) {
-          this.gameover(judge, this.man_player.sengo);
+          this.gameover(judge);
         }
       }
       return this.board.display();
@@ -469,7 +469,7 @@
       })(this));
     };
 
-    Game.prototype.gameover = function(winner, man) {
+    Game.prototype.gameover = function(winner) {
       var msg, opt, _i, _len, _ref;
       this.status = null;
       _ref = this.orders;
@@ -492,7 +492,9 @@
       })();
       this.statusarea.innerHTML = msg;
       console.log("winner=" + winner.toString());
-      console.log("lineno=" + this.board.lineno.toString());
+      if (this.board.lineno != null) {
+        console.log("lineno=" + this.board.lineno.toString());
+      }
       if (winner !== 0) {
         return this.board.animate();
       }

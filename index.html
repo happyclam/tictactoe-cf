@@ -62,7 +62,6 @@
                 msgstr = '*弱い,普通,最強';
                 break;
             default:
-                alert(level);
                 msgstr = '*弱い,普通,最強';
             }
             navigator.notification.confirm(
@@ -106,17 +105,26 @@
   <div data-role="header" data-position="fixed">
     <h1 id="title">三目並べ</h1>
     <a href="javascript:inputlevel()" data-rel="dialog" data-transition="pop" class="ui-btn-right" data-role="button" data-icon="gear">設定</a>
+    <!-- <a href="javascript:showConfirm()" data-rel="dialog" data-transition="pop" class="ui-btn-right" data-role="button" data-icon="gear">設定</a> -->
   </div>
   <div data-role="content">
     <canvas id="canvasMain"></canvas>
-    <div data-type="horizontal">
-      <input type="radio" name="optOrders" id="optOrder1" value="-1" checked="checked">先手
-      <input type="radio" name="optOrders" id="optOrder2" value="1">後手
-    </div>
+    <form>
+    <p style="display:inline-block; width:100px;">
+      <label class="radio-inline">
+        <input type="radio" name="optOrders" id="optOrder1" value="-1" checked="checked">先手
+      </label>
+    </p>
+    <p style="display:inline-block; width:100px;">
+      <label class="radio-inline">
+        <input type="radio" name="optOrders" id="optOrder2" value="1">後手
+      </label>
+    </p>
     <p>
-      <span id="spanStatus"></span>
+      <span id="spanStatus" style="color: red;"></span>
       <input id="btnStart" type="button" value="Start!">
     </p>
+    </form>
   </div>
   <div data-role="footer">
     <h4>&copy;2015 happyclam.github.io</h4>
