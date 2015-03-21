@@ -135,10 +135,22 @@
     <h1 id="title">コンピュータのレベル</h1>
   </div>
   <div data-role="content">
-    <div data-type="horizontal">
-      <input type="radio" name="optLevel" id="optLevel0" value="0">弱い
-      <input type="radio" name="optLevel" id="optLevel3" value="3">普通
-      <input type="radio" name="optLevel" id="optLevel6" value="6">最強
+    <div style="text-align: center;">
+    <p style="display:inline-block; width:100px;">
+      <label class="radio-inline" style="height: 2em;">
+        <input type="radio" name="optLevel" id="optLevel0" value="0">弱い
+      <label>
+    </p>
+    <p style="display:inline-block; width:100px;">
+      <label class="radio-inline" style="height: 2em;">
+        <input type="radio" name="optLevel" id="optLevel3" value="3">普通
+      </label>
+    </p>
+    <p style="display:inline-block; width:100px;">
+      <label class="radio-inline" style="height: 2em;">
+        <input type="radio" name="optLevel" id="optLevel6" value="6">最強
+      </label>
+    </p>
     </div>
     <a href="javascript:outputlevel()" data-role="button">O.K.</a>
     <a href="index.html" data-role="button">キャンセル</a>
