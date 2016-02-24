@@ -1,17 +1,8 @@
 #-*- coding: utf-8 -*-
-#NOUGHT = -1
-#CROSS = 1
-#DRAW = 0
-#MAX_VALUE = 9
-#MIN_VALUE = -9
-#LIMIT = 9
-#$ = jQuery
 $ ->
 
     Tictactoe = new Game
-    FastClick.attach document.body
-    return
-     
+
 class Const
     @NOUGHT = 1
     @CROSS = -1
@@ -25,13 +16,12 @@ class Const
     @PART = 100
 
 class Board extends Array
-#    constructor: (args...) ->
     constructor: (args) ->
-#        super(args...)
         @.push(args[i]) for i in [0...args.length]
         @canvas = document.getElementById("canvasMain")
         @canvas.width = Const.WIDTH
         @canvas.height = Const.HEIGHT
+        @lineno = null
         @lines = []
         @lines.push([0, 1, 2])
         @lines.push([3, 4, 5])
@@ -42,22 +32,75 @@ class Board extends Array
         @lines.push([0, 4, 8])
         @lines.push([2, 4, 6])
         @weight = [1, 0, 1, 0, 2, 0, 1, 0, 1]
-        
+        @start = {y:0, x:0}
+        @end = {y:220, x:100}
+        @request = null
+        @amount = 0
+
     clone: =>
         buf = new Array(@.length)
         for temp, i in @
             buf[i] = temp
 
     init: =>
+        @lineno = null
         @[i] = null for i in [0...@.length]
         @context.clearRect(0, 0, @canvas.width, @canvas.height)
+
+    animate: =>
+        @request = requestAnimFrame(@animate, @canvas)
+        @drawanimation()
+
+    drawanimation: =>
+        @context = @canvas.getContext('2d')
+        @amount += 0.02
+        @amount = 1  if @amount > 1
+        switch @lineno
+            when 0
+                @start.x = 25; @start.y = Const.PART - 50
+                @end.x = Const.WIDTH - 25; @end.y = Const.PART - 50
+            when 1
+                @start.x = 25; @start.y = Const.PART * 2 - 50
+                @end.x = Const.WIDTH - 25; @end.y = Const.PART * 2 - 50
+            when 2
+                @start.x = 25; @start.y = Const.PART * 3 - 50
+                @end.x = Const.WIDTH - 25; @end.y = Const.PART * 3 - 50
+            when 3
+                @start.x = Const.PART - 50; @start.y = 25
+                @end.x = Const.PART - 50; @end.y = Const.HEIGHT - 25
+            when 4
+                @start.x = Const.PART * 2 - 50; @start.y = 25
+                @end.x = Const.PART * 2 - 50; @end.y = Const.HEIGHT - 25
+            when 5
+                @start.x = Const.PART * 3 - 50; @start.y = 25
+                @end.x = Const.PART * 3 - 50; @end.y = Const.HEIGHT - 25
+            when 6
+                @start.x = 25; @start.y = 25
+                @end.x = Const.WIDTH - 25; @end.y = Const.HEIGHT - 25
+            when 7
+                @start.x = 25; @start.y = Const.HEIGHT - 25
+                @end.x = Const.WIDTH - 25; @end.y = 25
+
+        @context.beginPath()
+        @context.moveTo @start.x, @start.y
+        @context.strokeStyle = 'rgba(255, 105, 180, 0.2)'
+        @context.lineWidth = 12
+        newX = @start.x + (@end.x - @start.x) * @amount
+        newY = @start.y + (@end.y - @start.y) * @amount
+        @context.lineTo newX, newY
+        @context.stroke()
+        if newX is @end.x and newY is @end.y
+            cancelRequestAnimFrame @request
+            @request = null
+            @amount = 0
 
     display: =>
         @context = @canvas.getContext('2d')
         @context.beginPath()
-        @context.fillStyle = "#ffffff"
-        @context.strokeStyle = "#000000"
-        @context.lineWidth = 3
+        @context.fillStyle = "#2f4f4f"
+        @context.fillRect(0, 0, @canvas.width, @canvas.height)
+        @context.strokeStyle = "rgb(255, 255, 255)"
+        @context.lineWidth = 5
         @context.moveTo(Const.PART, 0); @context.lineTo(Const.PART, Const.HEIGHT)
         @context.moveTo(Const.PART * 2, 0); @context.lineTo(Const.PART * 2, Const.HEIGHT)
         @context.moveTo(0, Const.PART); @context.lineTo(Const.WIDTH, Const.PART)
@@ -73,10 +116,36 @@ class Board extends Array
                 @context.moveTo(x + Const.PART, y); @context.lineTo(x, y + Const.PART)
         @context.stroke()
 
+    drawline: =>
+        console.log(@lineno)
+        @context = @canvas.getContext('2d')
+        @context.beginPath()
+        @context.strokeStyle = "red"
+        @context.lineWidth = 12
+        switch @lineno
+            when 0
+                @context.moveTo(0 + 25, Const.PART - 50); @context.lineTo(Const.WIDTH - 25, Const.PART - 50)
+            when 1
+                @context.moveTo(0 + 25, Const.PART * 2 - 50); @context.lineTo(Const.WIDTH - 25, Const.PART * 2 - 50)
+            when 2
+                @context.moveTo(0 + 25, Const.PART * 3 - 50); @context.lineTo(Const.WIDTH - 25, Const.PART * 3 - 50)
+            when 3
+                @context.moveTo(Const.PART - 50, 0 + 25); @context.lineTo(Const.PART - 50, Const.HEIGHT - 25)
+            when 4
+                @context.moveTo(Const.PART * 2 - 50, 0 + 25); @context.lineTo(Const.PART * 2 - 50, Const.HEIGHT - 25)
+            when 5
+                @context.moveTo(Const.PART * 3 - 50, 0 + 25); @context.lineTo(Const.PART * 3 - 50, Const.HEIGHT - 25)
+            when 6
+                @context.moveTo(25, 25); @context.lineTo(Const.WIDTH - 25, Const.HEIGHT - 25)
+            when 7
+                @context.moveTo(25, Const.HEIGHT - 25); @context.lineTo(Const.WIDTH - 25, 25)
+        @context.stroke()
+
     wonorlost: =>
-        for line in @.lines
+        for line,i in @.lines
             piece = @[line[0]]
             if (piece && piece == @[line[1]] && piece == @[line[2]])
+                @lineno = i
                 return piece
         return null if null in @
         0
@@ -98,10 +167,8 @@ class Player
             when Const.CROSS then Const.MAX_VALUE
             when Const.DRAW then 0
             else 0
-                    
+
     lookahead: (board, turn, cnt, threshold) =>
-#        if cnt >= Const.LIMIT
-#            return locate: null, value: @evaluation(board)
         if turn == Const.CROSS
             value = Const.MIN_VALUE
         else
@@ -117,7 +184,7 @@ class Player
                     temp_v = ret.value
                 else
                     temp_v = @evaluation(board)
-                
+
                 board[i] = null
                 if (temp_v >= value && turn == Const.CROSS)
                     value = temp_v
@@ -128,7 +195,7 @@ class Player
                     locate = i
                     break if threshold > temp_v
         return locate: locate, value: value
-        
+
 class Game
     constructor: ->
         @board = new Board([null, null, null, null, null, null, null, null, null])
@@ -137,20 +204,20 @@ class Game
         @cpu_player = new Player(Const.NOUGHT)
         @orders = document.getElementsByName("optOrders")
         @startbtn = document.getElementById("btnStart")
-        @statusarea = document.getElementById("spanStatus")        
+        @statusarea = document.getElementById("spanStatus")
         @setEventListener()
         @board.display()
         @status = null
-                    
+
     btnstart: (target) =>
         console.log("game.btnstart")
         @board.init()
         if @cpu_player.sengo == Const.CROSS
             threshold = Const.MAX_VALUE
-            ret = @cpu_player.lookahead(@board, @cpu_player.sengo, 1, threshold)            
+            ret = @cpu_player.lookahead(@board, @cpu_player.sengo, 1, threshold)
             console.log(ret)
             @board[ret.locate] = Const.CROSS
-        @board.display()        
+        @board.display()
         @prepared()
 
     optchange: (target) =>
@@ -163,10 +230,10 @@ class Game
             @cpu_player.sengo = Const.NOUGHT
         console.log(@man_player.sengo)
         console.log(@cpu_player.sengo)
-        
+
     touch: (target, clientX, clientY) =>
         console.log("game.touch")
-        console.log(@status) 
+        console.log(@status)
         unless @status? then console.log("cancel"); return
         clickX = Math.floor((clientX - target[0].offsetLeft) / Const.PART)
         clickY = Math.floor((clientY - target[0].offsetTop) / Const.PART)
@@ -178,13 +245,13 @@ class Game
             @gameover(judge)
         else
             threshold = if @cpu_player.sengo == Const.CROSS then Const.MAX_VALUE else Const.MIN_VALUE
-            ret = @cpu_player.lookahead(@board, @cpu_player.sengo, 1, threshold)               
+            ret = @cpu_player.lookahead(@board, @cpu_player.sengo, 1, threshold)
             console.log(ret)
             @board[ret.locate] = @cpu_player.sengo
             judge = @board.wonorlost()
-            @gameover(judge) if judge != null
+            @gameover(judge) if judge?
         @board.display()
-            
+
     setEventListener: =>
         $('#optOrder1').on 'change', (e) =>
             target = $(e.currentTarget)
@@ -201,21 +268,22 @@ class Game
         $('#btnStart').on 'click', (e) =>
             target = $(e.currentTarget)
             @btnstart(target)
-            
-    gameover: (winorless) =>
+
+    gameover: (winner) =>
         console.log("game.gameover")
         @status = null
         for opt in @orders
             opt.disabled = false
         @startbtn.disabled = false
         console.log(@statusarea)
-        msg = switch winorless
+        msg = switch winner
             when Const.CROSS then "×の勝ち"
             when Const.NOUGHT then "◯の勝ち"
             when Const.DRAW then "引き分け"
             else ""
         @statusarea.innerHTML = msg
-                
+        @board.animate() if winner != 0
+
     prepared: =>
         console.log("game.prepared")
         @status = true
@@ -225,4 +293,11 @@ class Game
         @statusarea.innerHTML = ""
 
 window.Game = window.Game || Game
-    
+
+window.requestAnimFrame = (->
+  window.requestAnimationFrame or window.webkitRequestAnimationFrame or window.mozRequestAnimationFrame or window.oRequestAnimationFrame or window.msRequestAnimationFrame or (callback, element) ->
+    window.setTimeout callback, 1000 / 60
+)()
+window.cancelRequestAnimFrame = (->
+  window.cancelAnimationFrame or window.webkitCancelRequestAnimationFrame or window.mozCancelRequestAnimationFrame or window.oCancelRequestAnimationFrame or window.msCancelRequestAnimationFrame or clearTimeout
+)()
