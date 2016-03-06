@@ -39,16 +39,12 @@
   })();
 
   Board = (function(superClass) {
+    var drawanimation;
+
     extend(Board, superClass);
 
     function Board(args) {
-      this.wonorlost = bind(this.wonorlost, this);
-      this.drawline = bind(this.drawline, this);
-      this.display = bind(this.display, this);
-      this.drawanimation = bind(this.drawanimation, this);
       this.animate = bind(this.animate, this);
-      this.init = bind(this.init, this);
-      this.clone = bind(this.clone, this);
       var i, j, ref;
       for (i = j = 0, ref = args.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
         this.push(args[i]);
@@ -79,17 +75,6 @@
       this.amount = 0;
     }
 
-    Board.prototype.clone = function() {
-      var buf, i, j, len, results, temp;
-      buf = new Array(this.length);
-      results = [];
-      for (i = j = 0, len = this.length; j < len; i = ++j) {
-        temp = this[i];
-        results.push(buf[i] = temp);
-      }
-      return results;
-    };
-
     Board.prototype.init = function() {
       var i, j, ref;
       this.lineno = null;
@@ -101,10 +86,10 @@
 
     Board.prototype.animate = function() {
       this.request = requestAnimFrame(this.animate, this.canvas);
-      return this.drawanimation();
+      return drawanimation.call(this);
     };
 
-    Board.prototype.drawanimation = function() {
+    drawanimation = function() {
       var newX, newY;
       this.context = this.canvas.getContext('2d');
       this.amount += 0.02;
@@ -207,48 +192,6 @@
       return this.context.stroke();
     };
 
-    Board.prototype.drawline = function() {
-      console.log(this.lineno);
-      this.context = this.canvas.getContext('2d');
-      this.context.beginPath();
-      this.context.strokeStyle = "red";
-      this.context.lineWidth = 12;
-      switch (this.lineno) {
-        case 0:
-          this.context.moveTo(0 + 25, Const.PART - 50);
-          this.context.lineTo(Const.WIDTH - 25, Const.PART - 50);
-          break;
-        case 1:
-          this.context.moveTo(0 + 25, Const.PART * 2 - 50);
-          this.context.lineTo(Const.WIDTH - 25, Const.PART * 2 - 50);
-          break;
-        case 2:
-          this.context.moveTo(0 + 25, Const.PART * 3 - 50);
-          this.context.lineTo(Const.WIDTH - 25, Const.PART * 3 - 50);
-          break;
-        case 3:
-          this.context.moveTo(Const.PART - 50, 0 + 25);
-          this.context.lineTo(Const.PART - 50, Const.HEIGHT - 25);
-          break;
-        case 4:
-          this.context.moveTo(Const.PART * 2 - 50, 0 + 25);
-          this.context.lineTo(Const.PART * 2 - 50, Const.HEIGHT - 25);
-          break;
-        case 5:
-          this.context.moveTo(Const.PART * 3 - 50, 0 + 25);
-          this.context.lineTo(Const.PART * 3 - 50, Const.HEIGHT - 25);
-          break;
-        case 6:
-          this.context.moveTo(25, 25);
-          this.context.lineTo(Const.WIDTH - 25, Const.HEIGHT - 25);
-          break;
-        case 7:
-          this.context.moveTo(25, Const.HEIGHT - 25);
-          this.context.lineTo(Const.WIDTH - 25, 25);
-      }
-      return this.context.stroke();
-    };
-
     Board.prototype.wonorlost = function() {
       var i, j, len, line, piece, ref;
       ref = this.lines;
@@ -273,25 +216,24 @@
   Player = (function() {
     function Player(sengo) {
       this.sengo = sengo != null ? sengo : Const.CROSS;
-      this.lookahead = bind(this.lookahead, this);
-      this.evaluation = bind(this.evaluation, this);
-      this.check = bind(this.check, this);
     }
 
-    Player.prototype.check = function(board) {
-      var j, len, line, piece, ref;
-      ref = board.lines;
-      for (j = 0, len = ref.length; j < len; j++) {
-        line = ref[j];
-        piece = board[line[0]];
-        if (piece && piece === board[line[1]] && piece === board[line[2]]) {
-          return true;
+    Player.prototype.byweight = function(board) {
+      var b, cross, i, j, len, nought;
+      cross = 0;
+      nought = 0;
+      for (i = j = 0, len = board.length; j < len; i = ++j) {
+        b = board[i];
+        if (b === Const.CROSS) {
+          cross += board.weight[i];
+        } else if (b === Const.NOUGHT) {
+          nought += board.weight[i];
         }
       }
-      return false;
+      return cross - nought;
     };
 
-    Player.prototype.evaluation = function(board) {
+    Player.prototype.byline = function(board) {
       var ret;
       return ret = (function() {
         switch (board.wonorlost()) {
@@ -307,7 +249,7 @@
       })();
     };
 
-    Player.prototype.lookahead = function(board, turn, cnt, threshold) {
+    Player.prototype.lookahead = function(board, evaluation, turn, cnt, threshold) {
       var b, i, j, len, locate, ret, teban, temp_v, value;
       if (turn === Const.CROSS) {
         value = Const.MIN_VALUE;
@@ -321,10 +263,10 @@
           board[i] = turn;
           if (cnt < Const.LIMIT && board.wonorlost() === null) {
             teban = (turn === Const.NOUGHT ? Const.CROSS : Const.NOUGHT);
-            ret = this.lookahead(board, teban, cnt + 1, value);
+            ret = this.lookahead(board, evaluation, teban, cnt + 1, value);
             temp_v = ret.value;
           } else {
-            temp_v = this.evaluation(board);
+            temp_v = evaluation(board);
           }
           board[i] = null;
           if (temp_v >= value && turn === Const.CROSS) {
@@ -354,12 +296,6 @@
 
   Game = (function() {
     function Game() {
-      this.prepared = bind(this.prepared, this);
-      this.gameover = bind(this.gameover, this);
-      this.setEventListener = bind(this.setEventListener, this);
-      this.touch = bind(this.touch, this);
-      this.optchange = bind(this.optchange, this);
-      this.btnstart = bind(this.btnstart, this);
       this.board = new Board([null, null, null, null, null, null, null, null, null]);
       this.playing = false;
       this.man_player = new Player(Const.CROSS);
@@ -374,12 +310,10 @@
 
     Game.prototype.btnstart = function(target) {
       var ret, threshold;
-      console.log("game.btnstart");
       this.board.init();
       if (this.cpu_player.sengo === Const.CROSS) {
         threshold = Const.MAX_VALUE;
-        ret = this.cpu_player.lookahead(this.board, this.cpu_player.sengo, 1, threshold);
-        console.log(ret);
+        ret = this.cpu_player.lookahead(this.board, this.cpu_player.byweight, this.cpu_player.sengo, 1, threshold);
         this.board[ret.locate] = Const.CROSS;
       }
       this.board.display();
@@ -387,43 +321,32 @@
     };
 
     Game.prototype.optchange = function(target) {
-      console.log("game.optchange");
       if (target.context.value === "1") {
         this.man_player.sengo = Const.NOUGHT;
-        this.cpu_player.sengo = Const.CROSS;
+        return this.cpu_player.sengo = Const.CROSS;
       } else {
         this.man_player.sengo = Const.CROSS;
-        this.cpu_player.sengo = Const.NOUGHT;
+        return this.cpu_player.sengo = Const.NOUGHT;
       }
-      console.log(this.man_player.sengo);
-      return console.log(this.cpu_player.sengo);
     };
 
     Game.prototype.touch = function(target, clientX, clientY) {
       var clickX, clickY, judge, ret, threshold;
-      console.log("game.touch");
-      console.log(this.status);
       if (this.status == null) {
-        console.log("cancel");
         return;
       }
       clickX = Math.floor((clientX - target[0].offsetLeft) / Const.PART);
       clickY = Math.floor((clientY - target[0].offsetTop) / Const.PART);
       if (this.board[clickX + clickY * 3] !== null) {
-        console.log("not null");
         return;
       }
       this.board[clickX + clickY * 3] = this.man_player.sengo;
       judge = this.board.wonorlost();
-      if (judge !== null) {
-        console.log("judge=" + judge.toString());
-      }
-      if (judge !== null) {
+      if (judge != null) {
         this.gameover(judge);
       } else {
         threshold = this.cpu_player.sengo === Const.CROSS ? Const.MAX_VALUE : Const.MIN_VALUE;
-        ret = this.cpu_player.lookahead(this.board, this.cpu_player.sengo, 1, threshold);
-        console.log(ret);
+        ret = this.cpu_player.lookahead(this.board, this.cpu_player.byline, this.cpu_player.sengo, 1, threshold);
         this.board[ret.locate] = this.cpu_player.sengo;
         judge = this.board.wonorlost();
         if (judge != null) {
@@ -466,7 +389,6 @@
 
     Game.prototype.gameover = function(winner) {
       var j, len, msg, opt, ref;
-      console.log("game.gameover");
       this.status = null;
       ref = this.orders;
       for (j = 0, len = ref.length; j < len; j++) {
@@ -474,7 +396,6 @@
         opt.disabled = false;
       }
       this.startbtn.disabled = false;
-      console.log(this.statusarea);
       msg = (function() {
         switch (winner) {
           case Const.CROSS:
@@ -495,7 +416,6 @@
 
     Game.prototype.prepared = function() {
       var j, len, opt, ref;
-      console.log("game.prepared");
       this.status = true;
       ref = this.orders;
       for (j = 0, len = ref.length; j < len; j++) {

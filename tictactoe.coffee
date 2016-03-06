@@ -37,21 +37,16 @@ class Board extends Array
         @request = null
         @amount = 0
 
-    clone: =>
-        buf = new Array(@.length)
-        for temp, i in @
-            buf[i] = temp
-
-    init: =>
+    init: ->
         @lineno = null
         @[i] = null for i in [0...@.length]
         @context.clearRect(0, 0, @canvas.width, @canvas.height)
 
     animate: =>
         @request = requestAnimFrame(@animate, @canvas)
-        @drawanimation()
+        drawanimation.call @
 
-    drawanimation: =>
+    drawanimation= ->
         @context = @canvas.getContext('2d')
         @amount += 0.02
         @amount = 1  if @amount > 1
@@ -94,7 +89,7 @@ class Board extends Array
             @request = null
             @amount = 0
 
-    display: =>
+    display: ->
         @context = @canvas.getContext('2d')
         @context.beginPath()
         @context.fillStyle = "#2f4f4f"
@@ -116,32 +111,7 @@ class Board extends Array
                 @context.moveTo(x + Const.PART, y); @context.lineTo(x, y + Const.PART)
         @context.stroke()
 
-    drawline: =>
-        console.log(@lineno)
-        @context = @canvas.getContext('2d')
-        @context.beginPath()
-        @context.strokeStyle = "red"
-        @context.lineWidth = 12
-        switch @lineno
-            when 0
-                @context.moveTo(0 + 25, Const.PART - 50); @context.lineTo(Const.WIDTH - 25, Const.PART - 50)
-            when 1
-                @context.moveTo(0 + 25, Const.PART * 2 - 50); @context.lineTo(Const.WIDTH - 25, Const.PART * 2 - 50)
-            when 2
-                @context.moveTo(0 + 25, Const.PART * 3 - 50); @context.lineTo(Const.WIDTH - 25, Const.PART * 3 - 50)
-            when 3
-                @context.moveTo(Const.PART - 50, 0 + 25); @context.lineTo(Const.PART - 50, Const.HEIGHT - 25)
-            when 4
-                @context.moveTo(Const.PART * 2 - 50, 0 + 25); @context.lineTo(Const.PART * 2 - 50, Const.HEIGHT - 25)
-            when 5
-                @context.moveTo(Const.PART * 3 - 50, 0 + 25); @context.lineTo(Const.PART * 3 - 50, Const.HEIGHT - 25)
-            when 6
-                @context.moveTo(25, 25); @context.lineTo(Const.WIDTH - 25, Const.HEIGHT - 25)
-            when 7
-                @context.moveTo(25, Const.HEIGHT - 25); @context.lineTo(Const.WIDTH - 25, 25)
-        @context.stroke()
-
-    wonorlost: =>
+    wonorlost: ->
         for line,i in @.lines
             piece = @[line[0]]
             if (piece && piece == @[line[1]] && piece == @[line[2]])
@@ -152,23 +122,24 @@ class Board extends Array
 
 class Player
     constructor: (@sengo = Const.CROSS) ->
-        console.log(@sengo)
 
-    check: (board) =>
-        for line in board.lines
-            piece = board[line[0]]
-            if (piece && piece == board[line[1]] && piece == board[line[2]])
-                return true
-        false
+    byweight: (board) ->
+        cross = 0; nought = 0
+        for b,i in board
+            if b == Const.CROSS
+                cross += board.weight[i]
+            else if b == Const.NOUGHT
+                nought += board.weight[i]
+        (cross - nought)
 
-    evaluation: (board) =>
+    byline: (board) ->
         ret = switch board.wonorlost()
             when Const.NOUGHT then Const.MIN_VALUE
             when Const.CROSS then Const.MAX_VALUE
             when Const.DRAW then 0
             else 0
 
-    lookahead: (board, turn, cnt, threshold) =>
+    lookahead: (board, evaluation, turn, cnt, threshold) ->
         if turn == Const.CROSS
             value = Const.MIN_VALUE
         else
@@ -180,10 +151,12 @@ class Player
                 board[i] = turn
                 if cnt < Const.LIMIT && board.wonorlost() == null
                     teban = (if turn == Const.NOUGHT then Const.CROSS else Const.NOUGHT)
-                    ret = @lookahead(board, teban, cnt + 1, value)
+                    ret = @lookahead(board, evaluation, teban, cnt + 1, value)
                     temp_v = ret.value
                 else
-                    temp_v = @evaluation(board)
+                    temp_v = evaluation(board)
+#                    return locate:i, value: temp_v if ((temp_v == Const.MAX_VALUE && @sengo == Const.CROSS) ||
+#                            (temp_v == Const.MIN_VALUE && @sengo == Const.NOUGHT)) && (cnt == 1)
 
                 board[i] = null
                 if (temp_v >= value && turn == Const.CROSS)
@@ -194,6 +167,7 @@ class Player
                     value = temp_v
                     locate = i
                     break if threshold > temp_v
+
         return locate: locate, value: value
 
 class Game
@@ -209,50 +183,41 @@ class Game
         @board.display()
         @status = null
 
-    btnstart: (target) =>
-        console.log("game.btnstart")
+    btnstart: (target) ->
         @board.init()
         if @cpu_player.sengo == Const.CROSS
             threshold = Const.MAX_VALUE
-            ret = @cpu_player.lookahead(@board, @cpu_player.sengo, 1, threshold)
-            console.log(ret)
+            ret = @cpu_player.lookahead(@board, @cpu_player.byweight, @cpu_player.sengo, 1, threshold)
             @board[ret.locate] = Const.CROSS
         @board.display()
         @prepared()
 
-    optchange: (target) =>
-        console.log("game.optchange")
+    optchange: (target) ->
         if target.context.value == "1"
             @man_player.sengo = Const.NOUGHT
             @cpu_player.sengo = Const.CROSS
         else
             @man_player.sengo = Const.CROSS
             @cpu_player.sengo = Const.NOUGHT
-        console.log(@man_player.sengo)
-        console.log(@cpu_player.sengo)
 
-    touch: (target, clientX, clientY) =>
-        console.log("game.touch")
-        console.log(@status)
-        unless @status? then console.log("cancel"); return
+    touch: (target, clientX, clientY) ->
+        unless @status? then return
         clickX = Math.floor((clientX - target[0].offsetLeft) / Const.PART)
         clickY = Math.floor((clientY - target[0].offsetTop) / Const.PART)
-        unless @board[clickX + clickY * 3] == null then console.log("not null"); return
+        unless @board[clickX + clickY * 3] == null then return
         @board[clickX + clickY * 3] = @man_player.sengo
         judge = @board.wonorlost()
-        console.log("judge=" + judge.toString()) if judge != null
-        if judge != null
+        if judge?
             @gameover(judge)
         else
             threshold = if @cpu_player.sengo == Const.CROSS then Const.MAX_VALUE else Const.MIN_VALUE
-            ret = @cpu_player.lookahead(@board, @cpu_player.sengo, 1, threshold)
-            console.log(ret)
+            ret = @cpu_player.lookahead(@board, @cpu_player.byline, @cpu_player.sengo, 1, threshold)
             @board[ret.locate] = @cpu_player.sengo
             judge = @board.wonorlost()
             @gameover(judge) if judge?
         @board.display()
 
-    setEventListener: =>
+    setEventListener: ->
         $('#optOrder1').on 'change', (e) =>
             target = $(e.currentTarget)
             @optchange(target)
@@ -269,13 +234,11 @@ class Game
             target = $(e.currentTarget)
             @btnstart(target)
 
-    gameover: (winner) =>
-        console.log("game.gameover")
+    gameover: (winner) ->
         @status = null
         for opt in @orders
             opt.disabled = false
         @startbtn.disabled = false
-        console.log(@statusarea)
         msg = switch winner
             when Const.CROSS then "×の勝ち"
             when Const.NOUGHT then "◯の勝ち"
@@ -284,8 +247,7 @@ class Game
         @statusarea.innerHTML = msg
         @board.animate() if winner != 0
 
-    prepared: =>
-        console.log("game.prepared")
+    prepared: ->
         @status = true
         for opt in @orders
             opt.disabled = true
