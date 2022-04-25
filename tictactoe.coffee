@@ -17,6 +17,7 @@ class Const
 
 class Board extends Array
     constructor: (args) ->
+        super()
         @.push(args[i]) for i in [0...args.length]
         @canvas = document.getElementById("canvasMain")
         @canvas.width = Const.WIDTH
